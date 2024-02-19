@@ -2,7 +2,7 @@ name: PR
 
 on:
   pull_request:
-    branches:
+    branches: [ main]
       - main
     types: [opened, synchronize, reopened]
     permissions:
@@ -10,16 +10,17 @@ on:
       contents: write
       metadata: write
 
+env:
+  GOLANG_VERSION: '1.20'
+
 jobs:
   build:
     runs-on: ubuntu-20.04
     container:
-      image: golang:1.20
+      image: ${{ env.GOLANG_VERSION }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Make git directory safe
-        run: git config --global --add safe.directory '*'
+        uses: actions/checkout@v4
       - name: Make Build
         run: make build
 
@@ -27,12 +28,10 @@ jobs:
     needs: build
     runs-on: ubuntu-20.04
     container:
-      image: golang:1.20
+      image: ${{ env.GOLANG_VERSION }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Make git directory safe
-        run: git config --global --add safe.directory '*'
+        uses: actions/checkout@v4
       - name: Make Lint
         run: make lint
 
@@ -41,7 +40,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Lint Dockerfile
         run: |
           docker pull hadolint/hadolint:latest
