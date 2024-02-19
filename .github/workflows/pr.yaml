@@ -11,21 +11,32 @@ on:
       metadata: write
 
 jobs:
-  build-and-lint:
+  build:
     runs-on: ubuntu-20.04
-
     container:
       image: golang:1.20
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-    
-      - name: Make git directory safe
-        run: git config --global --add safe.directory /__w/my-keycloak/my-keycloak
-    
       - name: Make Build
         run: make build
-    
+
+  lint:
+    runs-on: ubuntu-20.04
+    container:
+      image: golangci/golangci-lint:v1.42.1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Make Lint
         run: make lint
+
+  docker-lint:
+    runs-on: ubuntu-20.04
+    container:
+      image: hadolint/hadolint:latest-alpine
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Lint Dockerfile
+        run: hadolint Dockerfile
