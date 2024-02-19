@@ -1,0 +1,24 @@
+name: Go Pull Request Review to Master
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    container:
+      image: golang:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Make Build
+      run: make build
+
+    - name: Make Lint
+      run: make lint
