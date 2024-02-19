@@ -1,0 +1,28 @@
+name: PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+    permissions:
+      checks: read
+      contents: write
+      metadata: write
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    container:
+      image: golang:latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Make Build
+      run: make build
+
+    - name: Make Lint
+      run: make lint
