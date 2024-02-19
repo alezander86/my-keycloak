@@ -3,7 +3,7 @@ name: Go Pull Request Review to Master
 on:
   pull_request:
     branches:
-      - master
+      - main
     types: [opened, synchronize, reopened]
 
 jobs:
