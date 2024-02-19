@@ -1,0 +1,16 @@
+apiVersion: v1.edp.epam.com/v1
+kind: KeycloakClient
+metadata:
+  name: keycloakclient-sample
+spec:
+  advancedProtocolMappers: true
+  clientId: agocd
+  directAccess: true
+  public: false
+  secret: $client-secret-name:client-secret-key
+  realmRef:
+    name: keycloakrealm-sample
+    kind: KeycloakRealm
+  webUrl: https://argocd.example.com
+  defaultClientScopes:
+    - argocd_groups

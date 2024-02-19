@@ -1,0 +1,174 @@
+package dto
+
+import (
+	keycloakApi "github.com/epam/edp-keycloak-operator/api/v1"
+)
+
+const defaultClientProtocol = "openid-connect"
+
+type Keycloak struct {
+	Url  string
+	User string
+	Pwd  string `json:"-"`
+}
+
+type Realm struct {
+	Name                     string
+	Users                    []User
+	SsoRealmName             string
+	SsoRealmEnabled          bool
+	SsoAutoRedirectEnabled   bool
+	ID                       *string
+	DisableCentralIDPMappers bool
+}
+
+type User struct {
+	Username   string   `json:"username"`
+	RealmRoles []string `json:"realmRoles"`
+}
+
+func ConvertSpecToRole(roleInstance *keycloakApi.KeycloakRealmRole) *PrimaryRealmRole {
+	rr := PrimaryRealmRole{
+		Name:        roleInstance.Spec.Name,
+		Description: roleInstance.Spec.Description,
+		IsComposite: roleInstance.Spec.Composite,
+		Attributes:  roleInstance.Spec.Attributes,
+		Composites:  make([]string, 0, len(roleInstance.Spec.Composites)),
+		IsDefault:   roleInstance.Spec.IsDefault,
+	}
+
+	for _, comp := range roleInstance.Spec.Composites {
+		rr.Composites = append(rr.Composites, comp.Name)
+	}
+
+	if roleInstance.Status.ID != "" {
+		rr.ID = &roleInstance.Status.ID
+	}
+
+	return &rr
+}
+
+func ConvertSpecToRealm(spec *keycloakApi.KeycloakRealmSpec) *Realm {
+	var users []User
+	for _, item := range spec.Users {
+		users = append(users, User(item))
+	}
+
+	return &Realm{
+		Name:                     spec.RealmName,
+		Users:                    users,
+		SsoRealmName:             spec.SsoRealmName,
+		SsoRealmEnabled:          spec.SSOEnabled(),
+		SsoAutoRedirectEnabled:   spec.SSOAutoRedirectEnabled(),
+		ID:                       spec.ID,
+		DisableCentralIDPMappers: spec.DisableCentralIDPMappers,
+	}
+}
+
+type Client struct {
+	ID                           string
+	ClientId                     string
+	ClientSecret                 string `json:"-"`
+	RealmName                    string
+	Roles                        []string
+	PublicClient                 bool
+	DirectAccess                 bool
+	WebUrl                       string
+	Protocol                     string
+	Attributes                   map[string]string
+	AdvancedProtocolMappers      bool
+	ServiceAccountEnabled        bool
+	FrontChannelLogout           bool
+	RedirectUris                 []string
+	BaseUrl                      string
+	WebOrigins                   []string
+	AuthorizationServicesEnabled bool
+	BearerOnly                   bool
+	ClientAuthenticatorType      string
+	ConsentRequired              bool
+	Description                  string
+	Enabled                      bool
+	FullScopeAllowed             bool
+	ImplicitFlowEnabled          bool
+	Name                         string
+	Origin                       string
+	RegistrationAccessToken      string
+	StandardFlowEnabled          bool
+	SurrogateAuthRequired        bool
+}
+
+type PrimaryRealmRole struct {
+	ID          *string
+	Name        string
+	Composites  []string
+	IsComposite bool
+	Description string
+	Attributes  map[string][]string
+	IsDefault   bool
+}
+
+type IncludedRealmRole struct {
+	Name      string
+	Composite string
+}
+
+func ConvertSpecToClient(spec *keycloakApi.KeycloakClientSpec, clientSecret, realmName string) *Client {
+	return &Client{
+		RealmName:                    realmName,
+		ClientId:                     spec.ClientId,
+		ClientSecret:                 clientSecret,
+		Roles:                        spec.ClientRoles,
+		PublicClient:                 spec.Public,
+		DirectAccess:                 spec.DirectAccess,
+		WebUrl:                       spec.WebUrl,
+		Protocol:                     getValueOrDefault(spec.Protocol),
+		Attributes:                   spec.Attributes,
+		AdvancedProtocolMappers:      spec.AdvancedProtocolMappers,
+		ServiceAccountEnabled:        spec.ServiceAccount != nil && spec.ServiceAccount.Enabled,
+		FrontChannelLogout:           spec.FrontChannelLogout,
+		RedirectUris:                 spec.RedirectUris,
+		WebOrigins:                   spec.WebOrigins,
+		ImplicitFlowEnabled:          spec.ImplicitFlowEnabled,
+		AuthorizationServicesEnabled: spec.AuthorizationServicesEnabled,
+		BearerOnly:                   spec.BearerOnly,
+		ClientAuthenticatorType:      spec.ClientAuthenticatorType,
+		ConsentRequired:              spec.ConsentRequired,
+		Description:                  spec.Description,
+		Enabled:                      spec.Enabled,
+		FullScopeAllowed:             spec.FullScopeAllowed,
+		Name:                         spec.Name,
+		StandardFlowEnabled:          spec.StandardFlowEnabled,
+		SurrogateAuthRequired:        spec.SurrogateAuthRequired,
+	}
+}
+
+func getValueOrDefault(protocol *string) string {
+	if protocol == nil {
+		return defaultClientProtocol
+	}
+
+	return *protocol
+}
+
+type IdentityProviderMapper struct {
+	IdentityProviderMapper string            `json:"identityProviderMapper"`
+	IdentityProviderAlias  string            `json:"identityProviderAlias,omitempty"`
+	Name                   string            `json:"name"`
+	Config                 map[string]string `json:"config"`
+	ID                     string            `json:"id"`
+}
+
+func ConvertSSOMappersToIdentityProviderMappers(idpAlias string,
+	ssoMappers []keycloakApi.SSORealmMapper) []IdentityProviderMapper {
+	idpMappers := make([]IdentityProviderMapper, 0, len(ssoMappers))
+	for _, sm := range ssoMappers {
+		idpMappers = append(idpMappers, IdentityProviderMapper{
+			IdentityProviderAlias:  idpAlias,
+			IdentityProviderMapper: sm.IdentityProviderMapper,
+			Config:                 sm.Config,
+			Name:                   sm.Name,
+		})
+	}
+
+	return idpMappers
+}

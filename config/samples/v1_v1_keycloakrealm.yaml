@@ -1,0 +1,28 @@
+apiVersion: v1.edp.epam.com/v1
+kind: KeycloakRealm
+metadata:
+  name: keycloakrealm-sample
+spec:
+  id: d1-id-kc-realm-name
+  realmName: d2-id-kc-realm-name
+  keycloakRef:
+    name: keycloak-sample
+    kind: Keycloak
+  ssoRealmName: openshift
+  ssoRealmEnabled: false # new one
+  ssoAutoRedirectEnabled: false # new one
+  passwordPolicy:
+    - type: "forceExpiredPasswordChange"
+      value: "365"
+    - type: "length"
+      value: "8"
+  realmEventConfig:
+    adminEventsDetailsEnabled: false
+    adminEventsEnabled: true
+    enabledEventTypes:
+      - UPDATE_CONSENT_ERROR
+      - CLIENT_LOGIN
+    eventsEnabled: true
+    eventsExpiration: 15000
+    eventsListeners:
+      - jboss-logging
