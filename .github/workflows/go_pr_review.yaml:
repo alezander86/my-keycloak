@@ -1,4 +1,4 @@
-name: Go Pull Request Review to Master
+name: PR
 
 on:
   pull_request:
