@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     container:
-      image: ${{ env.GOLANG_VERSION }}
+      image: golang:${{ env.GOLANG_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
     needs: build
     runs-on: ubuntu-20.04
     container:
-      image: ${{ env.GOLANG_VERSION }}
+      image: golang:${{ env.GOLANG_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
