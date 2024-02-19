@@ -12,10 +12,10 @@ on:
 
 jobs:
   build-and-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     container:
-      image: golang:latest
+      image: golang:1.20
 
     steps:
     - name: Checkout code
