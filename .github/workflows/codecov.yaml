@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 env:
   GOLANG_VERSION: '1.20'
