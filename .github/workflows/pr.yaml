@@ -9,6 +9,42 @@ env:
   GOLANG_VERSION: '1.20'
 
 jobs:
+
+  check-commit-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important to fetch all the commits
+
+      - name: Check Commit Message
+        run: |
+          echo "Checking commit messages..."
+
+          # Regular expression to match the commit message format
+          COMMIT_REGEX='^(feat|chore|fix): .{1,91}$'
+
+          # Fetch all the commit messages included in the PR
+          commit_messages=$(git log --no-merges --pretty=format:%s origin/main..HEAD)
+
+          fail_flag=0
+          echo "$commit_messages" | while read commit_message; do
+            if ! [[ "$commit_message" =~ $COMMIT_REGEX ]]; then
+              echo "Commit message \"${commit_message}\" does not match the required pattern."
+              echo "Expected pattern: 'feat:', 'chore:', or 'fix:' followed by a space and a description (up to 100 characters in total)."
+              fail_flag=1
+            fi
+          done
+
+          # If any commit message didn't match the pattern, fail the job
+          if [ "$fail_flag" -eq 1 ]; then
+            exit 1
+          fi
+
+          echo "All commit messages match the required format."
+
   build:
     runs-on: ubuntu-20.04
     steps:
@@ -22,8 +58,6 @@ jobs:
   lint:
     needs: build
     runs-on: ubuntu-20.04
-    container:
-      image: golang:1.20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
