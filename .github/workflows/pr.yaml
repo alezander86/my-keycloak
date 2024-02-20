@@ -24,21 +24,21 @@ jobs:
           echo "Checking commit messages..."
 
           # Regular expression to match the commit message format
-          COMMIT_REGEX='^(feat|chore|fix): .{1,91}$'
+          COMMIT_REGEX='^(feat|chore|fix): .{1,86}\(\#[0-9]+\)$'
 
           # Fetch all the commit messages included in the PR
           commit_messages=$(git log --no-merges --pretty=format:%s origin/main..HEAD)
 
           # Check messages
           fail_flag=0
-          while IFS= read -r commit_message; do
+          echo "$commit_messages" | while IFS= read -r commit_message; do
             if ! [[ "$commit_message" =~ $COMMIT_REGEX ]]; then
               echo "Commit message \"${commit_message}\" does not match the required pattern."
-              echo "Expected pattern: 'feat:', 'chore:', or 'fix:' followed by a space and a description (up to 100 characters in total)."
+              echo "Expected pattern: 'feat:', 'chore:', or 'fix:' followed by a space, a description (up to 100 characters in total including the issue number), and ends with an issue number in the format '(#number)'."
               fail_flag=1
               break # Exit the loop at the first error
             fi
-          done <<< "$commit_messages"
+          done
 
           # If any commit message didn't match the pattern, fail the job
           if [ "$fail_flag" -ne 0 ]; then
