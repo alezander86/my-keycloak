@@ -72,7 +72,7 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
   docker-lint:
-    needs: lint
+    needs: build
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
