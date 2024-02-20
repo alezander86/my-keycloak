@@ -32,6 +32,14 @@ jobs:
         # Create cluster from specific config
         kind create cluster --config "${YAML_CONFIG}"
 
+    - name: Create keycloak namespace
+      run: kubectl create ns keycloak
+
+    - name: Deploy Keycloak server and wait for readiness
+      run: |
+        kubectl apply -f tests/e2e/helm-success-path/01-install-keycloak-server.yaml --namespace keycloak
+        kubectl wait --for condition=Available=True deployment keycloak --timeout=120s --namespace keycloak
+
     - name: Delete the Kubernetes cluster
       if: always()
       run: kind delete cluster
