@@ -53,8 +53,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GOLANG_VERSION }}
+
       - name: Make Build
         run: make build
 
@@ -64,6 +67,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GOLANG_VERSION }}
       - name: Make Lint
