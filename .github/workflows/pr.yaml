@@ -29,17 +29,19 @@ jobs:
           # Fetch all the commit messages included in the PR
           commit_messages=$(git log --no-merges --pretty=format:%s origin/main..HEAD)
 
+          # Check messages
           fail_flag=0
-          echo "$commit_messages" | while read commit_message; do
+          while IFS= read -r commit_message; do
             if ! [[ "$commit_message" =~ $COMMIT_REGEX ]]; then
               echo "Commit message \"${commit_message}\" does not match the required pattern."
               echo "Expected pattern: 'feat:', 'chore:', or 'fix:' followed by a space and a description (up to 100 characters in total)."
               fail_flag=1
+              break # Exit the loop at the first error
             fi
-          done
+          done <<< "$commit_messages"
 
           # If any commit message didn't match the pattern, fail the job
-          if [ "$fail_flag" -eq 1 ]; then
+          if [ "$fail_flag" -ne 0 ]; then
             exit 1
           fi
 
