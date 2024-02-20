@@ -82,9 +82,61 @@ jobs:
         with:
           dockerfile: Dockerfile
 
+jobs:
+  integration-tests:
+    needs: [docker-lint]
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        kube-version:
+        - "1.26"
+        - "1.27"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - run: |
+          curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.14.0/kind-$(uname)-amd64"
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind create cluster --name e2e-test-cluster --image kindest/node:v${{ matrix.kube-version }}
+
+      - run: |
+          curl -LO "https://dl.k8s.io/release/v${{ matrix.kube-version }}/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+
+      - run: |
+          kubectl create ns keycloak
+          kubectl apply -f tests/e2e/helm-success-path/01-install-keycloak-server.yaml -n keycloak
+          kubectl rollout status deploy/keycloak -n keycloak --timeout=5m
+
+      - run: |
+          KEYCLOAK_IP=$(kubectl get svc keycloak -n keycloak -o jsonpath='{.spec.clusterIP}')
+          TEST_KEYCLOAK_URL="http://${KEYCLOAK_IP}:8080" make test
+
+      - if: always()
+        run: kind delete cluster --name e2e-test-cluster
+
+  integration-tests-check:
+    needs: [integration-tests]
+    runs-on: ubuntu-20.04
+    steps:
+      - run: echo The test result is ${{ needs.integration-tests.result }}
+
+      - run: |
+          if [ "${{ needs.integration-tests.result }}" != 'success' ]; then
+            exit 1
+          fi
+
   e2e-tests:
     name: End-to-end tests
-    needs: [docker-lint]
+    needs: [integration-tests-check]
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
