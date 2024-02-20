@@ -82,7 +82,6 @@ jobs:
         with:
           dockerfile: Dockerfile
 
-jobs:
   integration-tests:
     needs: [docker-lint]
     runs-on: ubuntu-20.04
