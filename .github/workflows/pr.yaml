@@ -103,7 +103,14 @@ jobs:
           curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.14.0/kind-$(uname)-amd64"
           chmod +x ./kind
           sudo mv ./kind /usr/local/bin/kind
-          kind create cluster --name e2e-test-cluster --image kindest/node:v${{ matrix.kube-version }}
+
+      - run: |
+          KIND_IMAGE_TAG=$(curl -s https://registry.hub.docker.com/v1/repositories/kindest/node/tags | jq -r '.[].name' | grep -E "^v${{ matrix.kube-version }}")
+          if [ -z "$KIND_IMAGE_TAG" ]; then
+            echo "No matching KinD node image found for Kubernetes version v${{ matrix.kube-version }}"
+            exit 1
+          fi
+          kind create cluster --name e2e-test-cluster --image "kindest/node:$KIND_IMAGE_TAG"
 
       - run: |
           curl -LO "https://dl.k8s.io/release/v${{ matrix.kube-version }}/bin/linux/amd64/kubectl"
