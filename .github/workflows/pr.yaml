@@ -40,6 +40,9 @@ jobs:
         kubectl apply -f tests/e2e/helm-success-path/01-install-keycloak-server.yaml --namespace keycloak
         kubectl wait --for condition=Available=True deployment keycloak --timeout=120s --namespace keycloak
 
+    - name: Get all pods in all namespaces
+      run: kubectl get pods --all-namespaces
+
     - name: List services in keycloak namespace
       run: kubectl get services --namespace keycloak
       id: list-services
