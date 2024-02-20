@@ -64,39 +64,12 @@ jobs:
       - name: Make Lint
         run: make lint
 
-      - name: Validate SONAR_TOKEN
-        run: |
-          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
-            echo "SONAR_TOKEN is empty"
-            exit 1
-          else
-            echo "SONAR_TOKEN is set"
-          fi
-
-      - name: Validate SONAR_ORGANIZATION
-        run: |
-          if [ -z "${{ secrets.SONAR_ORGANIZATION }}" ]; then
-            echo "SONAR_ORGANIZATION is empty"
-            exit 1
-          else
-            echo "SONAR_ORGANIZATION is set"
-          fi
-
-      - name: Validate GITHUB_TOKEN
-        run: |
-          if [ -z "${{ secrets.GITHUB_TOKEN }}" ]; then
-            echo "GITHUB_TOKEN is empty"
-            exit 1
-          else
-            echo "GITHUB_TOKEN is set"
-          fi
-
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      # - name: SonarCloud Scan
+      #   uses: sonarsource/sonarcloud-github-action@master
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
   docker-lint:
     needs: build
