@@ -38,7 +38,7 @@ jobs:
               fail_flag=1
               break # Exit the loop at the first error
             fi
-          done
+          done <<< "$commit_messages"
 
           # If any commit message didn't match the pattern, fail the job
           if [ "$fail_flag" -ne 0 ]; then
