@@ -48,8 +48,7 @@ jobs:
       id: list-services
 
     - name: Port-forward Keycloak service
-      run: kubectl port-forward svc/keycloak 8081:8081 --namespace keycloak &
-      sleep 5
+      run: kubectl port-forward svc/keycloak 8081:8081 --namespace keycloak & sleep 5
 
     - name: Run tests against the Keycloak service
       run: |
