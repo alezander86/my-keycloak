@@ -103,6 +103,11 @@ jobs:
                --lint-conf ${LINTCONF_FILE_PATH} \
                --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
 
+        env:
+          CHART_DIR: "deploy-templates"
+          CT_CONFIGS_DIR: "."
+          CT_CONFIGS_DIR_DEFAULT: "ct-config-dir"
+
       # - name: Run ct lint
       #   run: |
       #     CT_FILE_PATH="${CT_CONFIGS_DIR}/ct.yaml"
