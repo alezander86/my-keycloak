@@ -47,10 +47,14 @@ jobs:
       run: kubectl get services --namespace keycloak
       id: list-services
 
+    - name: Port-forward Keycloak service
+      run: kubectl port-forward svc/keycloak 8081:8081 --namespace keycloak &
+      background: true
+
     - name: Run tests against the Keycloak service
       run: |
         # Extract the cluster IP and port from the service
-        TEST_KEYCLOAK_URL="http://keycloak.keycloak:8081"
+        TEST_KEYCLOAK_URL="http://localhost:8081"
         echo "Test Keycloak URL: $TEST_KEYCLOAK_URL"
         # Set the URL in environment variable for make test
         export TEST_KEYCLOAK_URL
