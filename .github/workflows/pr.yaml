@@ -47,7 +47,7 @@ jobs:
 
           echo "All commit messages match the required format."
 
-  build:
+  build-and-lint:
     needs: check-commit-message
     runs-on: ubuntu-20.04
     steps:
@@ -65,7 +65,7 @@ jobs:
         run: make lint
 
   docker-lint:
-    needs: build
+    needs: [build-and-lint]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
@@ -140,7 +140,7 @@ jobs:
         YAML_CONFIG: ${{ format('hack/kind-{0}.yaml', matrix.kube-version) }}
       run: |
         # Install kind
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.14.0/kind-$(uname)-amd64
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-$(uname)-amd64
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin/kind
         # Create cluster from specific config
