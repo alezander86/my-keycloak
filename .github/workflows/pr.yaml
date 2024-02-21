@@ -27,36 +27,22 @@ jobs:
 
       - name: Validate commit messages
         run: |
-          COMMIT_MESSAGE_PATTERN='^(feat|fix|docs|style|refactor|test|chore): .{1,86}\(\#\d+\)$'
-          # Fetch commit messages comparing with the base branch, excluding merge commits
-          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..HEAD --no-merges --pretty=format:%s)
-          echo "Commit messages:"
+          BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..${BASE_BRANCH} --no-merges --pretty=format:"%s")
+
+          echo "Commit messages to validate:"
           echo "$COMMIT_MESSAGES"
-          
-          python3 -c '''
-          import os
-          import re
-          import sys
-
-          commit_message_pattern = os.environ["COMMIT_MESSAGE_PATTERN"]
-          commit_messages = os.environ["COMMIT_MESSAGES"]
-          max_line_length = int(os.environ["MAX_LINE_LENGTH"])
-
-          print("Pattern to validate commit message:", commit_message_pattern)
-
-          for commit_message in commit_messages.strip().split("\n"):
-              print("Commit message to validate:", commit_message)
-              if not re.search(commit_message_pattern, commit_message):
-                  print("Commit message is invalid. The required pattern is", commit_message_pattern)
-                  sys.exit(1)
-
-              if len(commit_message) > max_line_length:
-                  print("Commit message is too long. Each message should be no longer than", max_line_length, "characters.")
-                  sys.exit(1)
-          '''
-        env:
-          COMMIT_MESSAGE_PATTERN: '^(feat|fix|docs|style|refactor|test|chore): .{1,86}\(\#\d+\)$'
-          MAX_LINE_LENGTH: '80'
+          echo "$COMMIT_MESSAGES" | while IFS= read -r line; do
+              if [[ ! $line =~ ^(feat|fix|docs|style|refactor|test|chore):.[A-Z].{1,86}\(\#\d+\)$ ]]; then
+                  echo "Commit message does not follow the conventional commit message pattern: $line"
+                  exit 1
+              fi
+              MAX_LINE_LENGTH=80
+              if (( ${#line} > MAX_LINE_LENGTH )); then
+                  echo "Commit message exceeds the max line length of $MAX_LINE_LENGTH characters: $line"
+                  exit 1
+              fi
+          done
 
   helm-docs:
     needs: [check-commit-message]
