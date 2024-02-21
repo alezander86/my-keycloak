@@ -28,21 +28,24 @@ jobs:
       - name: Validate commit messages
         run: |
           BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          COMMIT_MESSAGES=$(git log origin/main..${BASE_BRANCH} --no-merges --pretty=format:"%s")
+          COMMIT_MESSAGES=$(git log origin/main..$BASE_BRANCH --no-merges --pretty=format:"%s")
 
           echo "Commit messages to validate:"
-          echo "$COMMIT_MESSAGES"
           echo "$COMMIT_MESSAGES" | while IFS= read -r line; do
-              if [[ ! $line =~ ^(feat|fix|docs|style|refactor|test|chore):\s[A-Z].*\(\#[0-9]+\)$ ]]; then
-                  echo "Commit message does not follow the conventional commit message pattern: $line"
-                  exit 1
-              fi
-              MAX_LINE_LENGTH=80
-              if (( ${#line} > MAX_LINE_LENGTH )); then
-                  echo "Commit message exceeds the max line length of $MAX_LINE_LENGTH characters: $line"
-                  exit 1
-              fi
+            if [[ ! "$line" =~ ^feat|fix|docs|style|refactor|test|chore:[[:space:]]{1}[A-Z].*\(\#[0-9]+\)$ ]]; then
+              echo "Commit message does not follow the conventional commit message pattern: $line"
+              exit 1
+            fi
+            MAX_LINE_LENGTH=80
+            if (( ${#line} > MAX_LINE_LENGTH )); then
+              echo "Commit message exceeds the max line length of $MAX_LINE_LENGTH characters: $line"
+              exit 1
+            fi
           done
+        shell: /usr/bin/bash
+        env:
+          GOLANG_VERSION: 1.20
+          MAX_LINE_LENGTH: 80
 
   helm-docs:
     needs: [check-commit-message]
