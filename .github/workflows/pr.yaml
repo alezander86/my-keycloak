@@ -33,7 +33,7 @@ jobs:
           echo "Commit messages to validate:"
           echo "$COMMIT_MESSAGES"
           echo "$COMMIT_MESSAGES" | while IFS= read -r line; do
-              if [[ ! $line =~ ^(feat|fix|docs|style|refactor|test|chore):[[:space:]][A-Z].*\(\#\d+\)$ ]]; then
+              if [[ ! $line =~ ^(feat|fix|docs|style|refactor|test|chore):\s[A-Z].*\(\#[0-9]+\)$ ]]; then
                   echo "Commit message does not follow the conventional commit message pattern: $line"
                   exit 1
               fi
