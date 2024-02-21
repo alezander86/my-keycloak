@@ -27,40 +27,36 @@ jobs:
 
       - name: Validate commit messages
         run: |
-          COMMIT_MESSAGE_PATTERN='^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
-          BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          
-          # Fetch commit messages comparing with the base branch (typically 'main' or 'master')
-          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..${BASE_BRANCH} --pretty=format:%s)
+          COMMIT_MESSAGE_PATTERN='^(feat|fix|docs|style|refactor|test|chore): .{1,86}\(\#\d+\)$'
+          # Fetch commit messages comparing with the base branch, excluding merge commits
+          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..HEAD --no-merges --pretty=format:%s)
           echo "Commit messages:"
           echo "$COMMIT_MESSAGES"
-          MAX_LINE_LENGTH=80
           
-          export COMMIT_MESSAGE_PATTERN
-          export COMMIT_MESSAGES
-          export MAX_LINE_LENGTH
-          
-          python3 -c '
+          python3 -c '''
           import os
           import re
           import sys
-          
+
           commit_message_pattern = os.environ["COMMIT_MESSAGE_PATTERN"]
           commit_messages = os.environ["COMMIT_MESSAGES"]
           max_line_length = int(os.environ["MAX_LINE_LENGTH"])
-          
+
           print("Pattern to validate commit message:", commit_message_pattern)
-          
-          for commit_message in commit_messages.split("\n"):
+
+          for commit_message in commit_messages.strip().split("\n"):
               print("Commit message to validate:", commit_message)
               if not re.search(commit_message_pattern, commit_message):
                   print("Commit message is invalid. The required pattern is", commit_message_pattern)
                   sys.exit(1)
-          
+
               if len(commit_message) > max_line_length:
                   print("Commit message is too long. Each message should be no longer than", max_line_length, "characters.")
                   sys.exit(1)
-          '
+          '''
+        env:
+          COMMIT_MESSAGE_PATTERN: '^(feat|fix|docs|style|refactor|test|chore): .{1,86}\(\#\d+\)$'
+          MAX_LINE_LENGTH: '80'
 
   helm-docs:
     needs: [check-commit-message]
