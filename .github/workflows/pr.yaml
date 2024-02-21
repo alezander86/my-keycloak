@@ -16,7 +16,9 @@ jobs:
 
   check-commit-message:
     runs-on: ubuntu-20.04
-
+    env:
+      COMMIT_MESSAGE_PATTERN: '^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
+      MAX_LINE_LENGTH: '80'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,9 +60,6 @@ jobs:
                   print("Commit message is too long. Each message should be no longer than", max_line_length, "characters.")
                   sys.exit(1)
           '
-        env:
-          COMMIT_MESSAGE_PATTERN: '^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
-          MAX_LINE_LENGTH: '80'
 
   helm-docs:
     needs: [check-commit-message]
