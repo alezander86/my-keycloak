@@ -69,36 +69,55 @@ jobs:
     needs: [check-commit-message]
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Helm
-        uses: azure/setup-helm@v1
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
-          version: 'latest'
+          fetch-depth: 0
 
-      - name: Install ct (chart-testing)
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.1
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          check-latest: true
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.6.0
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
         run: |
-          curl -sSLo- https://raw.githubusercontent.com/helm/chart-testing/master/install.sh | bash
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          if [[ -n "$changed" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Print the Helm version
-        run: |
-          helm version
+      - name: Run chart-testing (lint)
+        if: steps.list-changed.outputs.changed == 'true'
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }} \
+               --charts ${CHART_DIR}/ \
+               --config ${CT_FILE_PATH} \
+               --lint-conf ${LINTCONF_FILE_PATH} \
+               --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
 
-      - name: Run ct lint
-        run: |
-          CT_FILE_PATH="${CT_CONFIGS_DIR}/ct.yaml"
-          LINTCONF_FILE_PATH="${CT_CONFIGS_DIR}/lintconf.yaml"
-          CHART_SCHEMA_FILE_PATH="${CT_CONFIGS_DIR}/chart_schema.yaml"
+      # - name: Run ct lint
+      #   run: |
+      #     CT_FILE_PATH="${CT_CONFIGS_DIR}/ct.yaml"
+      #     LINTCONF_FILE_PATH="${CT_CONFIGS_DIR}/lintconf.yaml"
+      #     CHART_SCHEMA_FILE_PATH="${CT_CONFIGS_DIR}/chart_schema.yaml"
 
-          ct lint \
-            --charts ${CHART_DIR}/ \
-            --config ${CT_FILE_PATH} \
-            --lint-conf ${LINTCONF_FILE_PATH} \
-            --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
-        env:
-          CHART_DIR: "deploy-templates"
-          CT_CONFIGS_DIR: "."
-          CT_CONFIGS_DIR_DEFAULT: "ct-config-dir"
+      #     ct lint \
+      #       --charts ${CHART_DIR}/ \
+      #       --config ${CT_FILE_PATH} \
+      #       --lint-conf ${LINTCONF_FILE_PATH} \
+      #       --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
+      #   env:
+      #     CHART_DIR: "deploy-templates"
+      #     CT_CONFIGS_DIR: "."
+      #     CT_CONFIGS_DIR_DEFAULT: "ct-config-dir"
 
   build-and-lint:
     needs: [helm-docs]
