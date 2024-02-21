@@ -23,33 +23,44 @@ jobs:
         with:
           fetch-depth: 0 # Important to fetch all the commits
 
-      - name: Check Commit Message
+      - name: Validate commit messages
         run: |
-          echo "Checking commit messages..."
+          COMMIT_MESSAGE_PATTERN='^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
+          BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-          # Regular expression to match the commit message format
-          COMMIT_REGEX='^(feat|chore|fix): .{1,86}\(\#[0-9]+\)$'
+          # Fetch commits messages comparing with the base branch (typically 'main' or 'master')
+          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..${BASE_BRANCH} --pretty=format:%s)
+          MAX_LINE_LENGTH=80
 
-          # Fetch all the commit messages included in the PR
-          commit_messages=$(git log --no-merges --pretty=format:%s origin/main..HEAD)
+          python3 -c '
+          import os
+          import re
+          import sys
 
-          # Check messages
-          fail_flag=0
-          echo "$commit_messages" | while IFS= read -r commit_message; do
-            if ! [[ "$commit_message" =~ $COMMIT_REGEX ]]; then
-              echo "Commit message \"${commit_message}\" does not match the required pattern."
-              echo "Expected pattern: 'feat:', 'chore:', or 'fix:' followed by a space, a description (up to 100 characters in total including the issue number), and ends with an issue number in the format '(#number)'."
-              fail_flag=1
-              break # Exit the loop at the first error
-            fi
-          done <<< "$commit_messages"
+          commit_message_pattern = os.getenv("COMMIT_MESSAGE_PATTERN")
 
-          # If any commit message didn't match the pattern, fail the job
-          if [ "$fail_flag" -ne 0 ]; then
-            exit 1
-          fi
+          if not commit_message_pattern:
+              print("Pattern to validate commit message is empty")
+              sys.exit(1)
 
-          echo "All commit messages match the required format."
+          commit_messages = os.getenv("COMMIT_MESSAGES").split("\n")
+
+          print("Pattern to validate commit message:", commit_message_pattern)
+
+          for commit_message in commit_messages:
+              print("Commit message to validate:", commit_message)
+              if re.search(commit_message_pattern, commit_message) is None:
+                  print("Commit message is invalid. The required pattern is", commit_message_pattern)
+                  sys.exit(1)
+
+              max_line_length = int(os.getenv("MAX_LINE_LENGTH"))
+              if len(commit_message) > max_line_length:
+                  print("Commit message is too long. Each message should be no longer than", max_line_length, "characters.")
+                  sys.exit(1)
+          '
+        env:
+          COMMIT_MESSAGE_PATTERN: '^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
+          MAX_LINE_LENGTH: '80'
 
   helm-docs:
     needs: [check-commit-message]
