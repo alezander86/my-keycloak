@@ -68,6 +68,10 @@ jobs:
   helm-lint:
     needs: [check-commit-message]
     runs-on: ubuntu-20.04
+    env:
+     СHART_DIR: "deploy-templates"
+     CT_CONFIGS_DIR: "."
+     CT_CONFIGS_DIR_DEFAULT: "ct-config-dir"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -102,11 +106,6 @@ jobs:
                --config ${CT_FILE_PATH} \
                --lint-conf ${LINTCONF_FILE_PATH} \
                --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
-
-        env:
-          CHART_DIR: "deploy-templates"
-          CT_CONFIGS_DIR: "."
-          CT_CONFIGS_DIR_DEFAULT: "ct-config-dir"
 
       # - name: Run ct lint
       #   run: |
