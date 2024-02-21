@@ -28,12 +28,12 @@ jobs:
       - name: Validate commit messages
         run: |
           BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..${BASE_BRANCH} --no-merges --pretty=format:"%s")
+          COMMIT_MESSAGES=$(git log origin/main..${BASE_BRANCH} --no-merges --pretty=format:"%s")
 
           echo "Commit messages to validate:"
           echo "$COMMIT_MESSAGES"
           echo "$COMMIT_MESSAGES" | while IFS= read -r line; do
-              if [[ ! $line =~ ^(feat|fix|docs|style|refactor|test|chore):.[A-Z].{1,86}\(\#\d+\)$ ]]; then
+              if [[ ! $line =~ ^(feat|fix|docs|style|refactor|test|chore):[[:space:]][A-Z].*\(\#\d+\)$ ]]; then
                   echo "Commit message does not follow the conventional commit message pattern: $line"
                   exit 1
               fi
