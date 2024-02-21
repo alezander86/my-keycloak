@@ -29,33 +29,34 @@ jobs:
         run: |
           COMMIT_MESSAGE_PATTERN='^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
           BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-          # Fetch commits messages comparing with the base branch (typically 'main' or 'master')
+          
+          # Fetch commit messages comparing with the base branch (typically 'main' or 'master')
           COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}..${BASE_BRANCH} --pretty=format:%s)
+          echo "Commit messages:"
+          echo "$COMMIT_MESSAGES"
           MAX_LINE_LENGTH=80
-
+          
+          export COMMIT_MESSAGE_PATTERN
+          export COMMIT_MESSAGES
+          export MAX_LINE_LENGTH
+          
           python3 -c '
           import os
           import re
           import sys
-
-          commit_message_pattern = os.getenv("COMMIT_MESSAGE_PATTERN")
-
-          if not commit_message_pattern:
-              print("Pattern to validate commit message is empty")
-              sys.exit(1)
-
-          commit_messages = os.getenv("COMMIT_MESSAGES").split("\n")
-
+          
+          commit_message_pattern = os.environ["COMMIT_MESSAGE_PATTERN"]
+          commit_messages = os.environ["COMMIT_MESSAGES"]
+          max_line_length = int(os.environ["MAX_LINE_LENGTH"])
+          
           print("Pattern to validate commit message:", commit_message_pattern)
-
-          for commit_message in commit_messages:
+          
+          for commit_message in commit_messages.split("\n"):
               print("Commit message to validate:", commit_message)
-              if re.search(commit_message_pattern, commit_message) is None:
+              if not re.search(commit_message_pattern, commit_message):
                   print("Commit message is invalid. The required pattern is", commit_message_pattern)
                   sys.exit(1)
-
-              max_line_length = int(os.getenv("MAX_LINE_LENGTH"))
+          
               if len(commit_message) > max_line_length:
                   print("Commit message is too long. Each message should be no longer than", max_line_length, "characters.")
                   sys.exit(1)
