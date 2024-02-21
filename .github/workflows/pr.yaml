@@ -31,21 +31,24 @@ jobs:
           COMMIT_MESSAGES=$(git log origin/main..$BASE_BRANCH --no-merges --pretty=format:"%s")
 
           echo "Commit messages to validate:"
-          echo "$COMMIT_MESSAGES" | while IFS= read -r line; do
-            if [[ ! "$line" =~ ^feat|fix|docs|style|refactor|test|chore:[[:space:]]{1}[A-Z].*\(\#[0-9]+\)$ ]]; then
-              echo "Commit message does not follow the conventional commit message pattern: $line"
-              exit 1
-            fi
-            MAX_LINE_LENGTH=80
-            if (( ${#line} > MAX_LINE_LENGTH )); then
-              echo "Commit message exceeds the max line length of $MAX_LINE_LENGTH characters: $line"
-              exit 1
-            fi
-          done
-        shell: /usr/bin/bash
-        env:
-          GOLANG_VERSION: 1.20
-          MAX_LINE_LENGTH: 80
+          echo "$COMMIT_MESSAGES"
+
+          python3 -c "
+          import re
+          import sys
+
+          commit_messages = '''$COMMIT_MESSAGES'''.splitlines()
+          pattern = re.compile(r'^(feat|fix|docs|style|refactor|test|chore): [A-Z].*\(#[0-9]+\)$')
+          max_line_length = 80
+
+          for commit_message in commit_messages:
+              if not pattern.match(commit_message):
+                  print(f'Commit message does not follow the conventional commit message pattern: {commit_message}')
+                  sys.exit(1)
+              if len(commit_message) > max_line_length:
+                  print(f'Commit message exceeds the max line length of {max_line_length} characters: {commit_message}')
+                  sys.exit(1)
+          "
 
   helm-docs:
     needs: [check-commit-message]
