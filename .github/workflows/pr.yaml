@@ -25,30 +25,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate commit messages
-        run: |
-          BASE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          COMMIT_MESSAGES=$(git log origin/main..$BASE_BRANCH --no-merges --pretty=format:"%s")
+      - name: Check Commit Format
+        uses: gsactions/commit-message-checker@v2
+        with:
+          pattern: '^(fix|feat|docs|style|refactor|test|chore): .+ \(#\d+\)$'
+          error: 'Your commit message should be in the format "type: Description (#issue)". Example: "fix: Update build (#33)"'
 
-          echo "Commit messages to validate:"
-          echo "$COMMIT_MESSAGES"
-
-          python3 -c "
-          import re
-          import sys
-
-          commit_messages = '''$COMMIT_MESSAGES'''.splitlines()
-          pattern = re.compile(r'^(feat|fix|docs|style|refactor|test|chore): [A-Z].*\(#[0-9]+\)$')
-          max_line_length = 80
-
-          for commit_message in commit_messages:
-              if not pattern.match(commit_message):
-                  print(f'Commit message does not follow the conventional commit message pattern: {commit_message}')
-                  sys.exit(1)
-              if len(commit_message) > max_line_length:
-                  print(f'Commit message exceeds the max line length of {max_line_length} characters: {commit_message}')
-                  sys.exit(1)
-          "
+      - name: Check Line Length
+        uses: gsactions/commit-message-checker@v2
+        with:
+          pattern: '.{0,50}'
+          error: 'The maximum line length of 50 characters is exceeded.'
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
 
   helm-docs:
     needs: [check-commit-message]
