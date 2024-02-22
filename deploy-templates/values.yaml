@@ -35,6 +35,7 @@ extraVolumes: []
 # -- Additional volumeMounts to be added to the container
 extraVolumeMounts: []
 #  - name: custom-ca
+
 #    mountPath: /etc/ssl/certs/CA.crt
 #    readOnly: true
 #    subPath: CA.crt
