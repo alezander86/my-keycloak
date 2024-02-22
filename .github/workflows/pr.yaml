@@ -2,7 +2,7 @@ name: "pull_request"
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
     types: [opened, synchronize, reopened]
 
 concurrency:
@@ -65,12 +65,15 @@ jobs:
         run: make validate-docs
 
   helm-lint:
-    needs: [check-commit-message]
+    needs: [helm-docs]
     runs-on: ubuntu-20.04
     env:
      СHART_DIR: "deploy-templates"
      CT_CONFIGS_DIR: "."
      CT_CONFIGS_DIR_DEFAULT: "ct-configs"
+     CT_FILE_PATH: "ct.yaml"
+     LINTCONF_FILE_PATH: "lintconf.yaml"
+     CHART_SCHEMA_FILE_PATH: "chart_schema.yaml"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
