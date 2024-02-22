@@ -101,7 +101,7 @@ jobs:
                --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
 
   build-and-lint:
-    needs: [helm-docs]
+    needs: [helm-lint]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
