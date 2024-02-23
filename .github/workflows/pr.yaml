@@ -16,9 +16,6 @@ jobs:
 
   check-commit-message:
     runs-on: ubuntu-20.04
-    env:
-      COMMIT_MESSAGE_PATTERN: '^(feat|fix|docs|style|refactor|test|chore){1}(!)?:\s[A-Z][a-z]([\/\.\w\-\s]+)\(\#\d+\)$'
-      MAX_LINE_LENGTH: '80'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,24 +33,10 @@ jobs:
         with:
           pattern: '.{0,50}'
           error: 'The maximum line length of 50 characters is exceeded.'
-          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
-          excludeTitle: 'true'  # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
-
-  helm-docs:
-    needs: [check-commit-message]
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GOLANG_VERSION }}
-
-      - name: Make Build
-        run: make validate-docs
+          excludeDescription: 'true'
+          excludeTitle: 'true'
+          checkAllCommitMessages: 'true'
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
 
   helm-lint:
     needs: [helm-docs]
@@ -91,7 +74,7 @@ jobs:
                --lint-conf ${LINTCONF_FILE_PATH} \
                --chart-yaml-schema ${CHART_SCHEMA_FILE_PATH}
 
-  build-and-lint:
+  build-lint-validate:
     needs: [helm-lint]
     runs-on: ubuntu-20.04
     steps:
@@ -108,8 +91,11 @@ jobs:
       - name: Make Lint
         run: make lint
 
+      - name: Make validate-docs
+        run: make validate-docs
+
   docker-lint:
-    needs: [build-and-lint]
+    needs: [build-lint-validate]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
@@ -179,16 +165,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup KinD Cluster
-      env:
-        YAML_CONFIG: ${{ format('hack/kind-{0}.yaml', matrix.kube-version) }}
-      run: |
-        # Install kind
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-$(uname)-amd64
-        chmod +x ./kind
-        sudo mv ./kind /usr/local/bin/kind
-        # Create cluster from specific config
-        kind create cluster --config "${YAML_CONFIG}"
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GOLANG_VERSION }}
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+
+    - name: "install kuttl"
+      run: ./hack/install-kuttl.sh
 
     - name: Create keycloak namespace
       run: kubectl create ns keycloak
