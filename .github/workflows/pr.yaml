@@ -39,7 +39,7 @@ jobs:
           accessToken: ${{ secrets.GITHUB_TOKEN }}
 
   helm-lint:
-    needs: [helm-docs]
+    needs: [check-commit-message]
     runs-on: ubuntu-20.04
     env:
      СHART_DIR: "deploy-templates"
